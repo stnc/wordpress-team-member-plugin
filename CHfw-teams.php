@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name:Chrom Themes Team
+Plugin Name:Chrom Themes team
 Plugin URI:
-Description: Team Members plugin for the Nucleon theme.
+Description: Team Members plugin
 Version: 1.11.16
-Author: Chrom Themes
+Author: selman tunç
 Text Domain: CHfw-team
 Domain Path: /languages/
 */
@@ -36,7 +36,7 @@ function CHfw_register_post_type_team() {
         'parent'             => __( 'Parent team ', 'CHfw-team' ),
         'not_found'          => 'No team  found',
         'not_found_in_trash' => 'No team in Trash',
-    
+
     );
     $args     = array(
         'label'               => 'team',
@@ -66,7 +66,7 @@ function CHfw_register_post_type_team() {
             'hierarchical' => true,
             'feeds'        => true
         ),
-        
+
         'supports' => array(
             'title',
             'excerpt',
@@ -74,9 +74,9 @@ function CHfw_register_post_type_team() {
             'thumbnail',
         )
     );
-    
+
     register_post_type( $slug, $args );
-    
+
 }
 
 add_action( 'init', 'CHfw_register_post_type_team' );
@@ -110,57 +110,57 @@ if ( $CHfw_team_post_type_post == 'team' or $CHfw_team_post_type_ch == 'team' ) 
 /*------------------UPDATE team---------------------*/
 
 //add_action( 'publish_team', 'team_schedule_team_expiration_event_insert' );
-function team_schedule_team_expiration_event_insert( $post_id ) {
+function CHfw2_team_schedule_team_expiration_event_insert( $post_id ) {
     // Schedule the actual event
     //wp_schedule_single_event( 30 * DAY_IN_SECONDS, 'updateCategories_team_after_expiration_V1', array( $post_id ) );//insert
     updateCategories_team_after_expiration_V1( $post_id );
     write_log("run");
-    
+
 }
 
 
-add_action( 'updateCategories_team_after_expiration', 'updateCategories_team_after_expiration', 10, 1 );
+add_action( 'updateCategories_team_after_expiration', 'CHfw2_updateCategories_team_after_expiration', 10, 1 );
 // This function will run once the 'addCategories_team_after_expiration' is called
 
 
-function updateCategories_team_after_expiration( $post_id ) {
-    
+function CHfw2_updateCategories_team_after_expiration( $post_id ) {
+
     global $wpdb;
-    
-    
+
+
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
         return;
     }
-    
+
     if ( wp_is_post_autosave( $post_id ) ) {
         return;
     }
-    
+
     // Check if not a revision.
     if ( wp_is_post_revision( $post_id ) ) {
         return;
     }
-    
+
     $term_cal = term_exists( 'Auto Draft', 'booked_custom_calendars' );
     if ( $term_cal !== 0 && $term_cal !== null ) {
         wp_delete_term( $term_cal['term_id'], 'booked_custom_calendars' );
     }
-    
+
     $term_event = term_exists( 'Auto Draft', 'mp-event_category' );
     if ( $term_event !== 0 && $term_event !== null ) {
         wp_delete_term( $term_event['term_id'], 'mp-event_category' );
     }
-    
+
     $post_title            = get_the_title( $post_id );
-    
+
     $display_before_title = get_post_meta( $post_id, 'wow_BeforeTitle' );
-    
+
     if ( count( $display_before_title ) > 0 ) {
         $display_before_title = $display_before_title[0];
     } else {
         $display_before_title = null;
     }
-    
+
     $term_event_id = term_exists( $post_title, 'mp-event_category' );
     if ( $term_event_id !== 0 && $term_event_id !== '' ) {
         $eklenen_term_id = isset( $term_event_id['term_id'] ) ? $term_event_id['term_id'] : 0;
@@ -174,21 +174,21 @@ function updateCategories_team_after_expiration( $post_id ) {
 
 //daha once eklenmemiş yani burada ilk ekleme de wow_BeforeTitle oluşmaz savebefore değeridir
     if ( empty( $display_before_title ) ) {
-        
+
         $args = array(
             'description' => "team plugin ; Automatic Value: " . $post_title . "",
             'slug'        => $post_title,
         );
 //buranın amacı term daha oluşmuş mu ona bakar eğer oluşmuşsa oluşturmaz
-        
-        
+
+
         $term_event_id = wp_insert_term( $post_title, "mp-event_category", $args );
         $eklenen_term_id = isset( $term_event_id['term_id'] ) ? $term_event_id['term_id'] : 0; //yeni eklenen term bilgisini gönder
-        
+
         $booked_custom_calendars_term=wp_insert_term( $post_title, "booked_custom_calendars", $args );
         $eklenen_booked_custom_calendars_term = isset( $booked_custom_calendars_term['term_id'] ) ? $booked_custom_calendars_term['term_id'] : 0;
-        
-        
+
+
     } //olay burada kırılacak burada insert yapacak ,yani burası ilk insert olayı olacak yer olsun
     else {
         //1 yeni yazılan ile eskisi farklı mı
@@ -197,7 +197,7 @@ function updateCategories_team_after_expiration( $post_id ) {
         //1 appoinmtetn calendar a bak -bunu güncelle
         // 2- ve timetable evnt e bak  --bak bunu guncelle
         //yoksa ve yeni ise term_insert
-        
+
         //buraya girerse title değişmiştir post title değişen değerdir eski değeri($display_before_title) term_exist yapıp
         if ( $display_before_title != $post_title ) {
             $term_control_event_category = term_exists( $display_before_title, 'mp-event_category' );
@@ -205,7 +205,7 @@ function updateCategories_team_after_expiration( $post_id ) {
                 'name' => $post_title,
                 'slug' => $post_title
             ) );
-            
+
             //booked_custom_calendars taxonomy change
             $term_control_booked_custom_calendars = term_exists( $display_before_title, 'booked_custom_calendars' );
             wp_update_term( $term_control_booked_custom_calendars['term_id'], 'booked_custom_calendars', array(
@@ -215,13 +215,13 @@ function updateCategories_team_after_expiration( $post_id ) {
         }
     }
     $cat_ids = array();
-    
+
     $selected_departman_id = CHfw_get_meta( $post_id, 'display_doctor_department', 'CHfw_DoctorAndDepartmant_ForSingleteamPage' );
-    
+
     if ( $selected_departman_id != false ) { //yani değer boş gelmemeiş ise --u yuzden wp_schedule_single_event() kullandım
         $selected_departman_id = (int) $selected_departman_id;
     }
-    
+
     if ( is_int( $selected_departman_id ) ) {
 //secilen departmanın bulur
         echo $sql = "SELECT t.*, tt.* FROM " . $wpdb->prefix . "terms AS t
@@ -231,7 +231,7 @@ function updateCategories_team_after_expiration( $post_id ) {
 	ORDER BY t.name ASC;";
         $cat_ids = $wpdb->get_col( $sql );
     }
-    
+
     //burası event de bulunana evnt categories e atama yapar
     array_push( $cat_ids, $eklenen_term_id );
     wp_set_post_terms( $selected_departman_id, $cat_ids, 'mp-event_category' );
@@ -245,8 +245,8 @@ function updateCategories_team_after_expiration( $post_id ) {
 
 
 //  runs when a Post is update
-add_action( 'publish_team', 'team_schedule_team_expiration_event_update' );
-function team_schedule_team_expiration_event_update( $post_id ) {
+add_action( 'publish_team', 'CHfw2_team_schedule_team_expiration_event_update' );
+function  CHfw2_team_schedule_team_expiration_event_update( $post_id ) {
     // Schedule the actual event
     //updateCategories_team_after_expiration( $post_id );
     wp_schedule_single_event( strtotime( "+2 seconds" ), 'updateCategories_team_after_expiration', array( $post_id ) );
@@ -259,8 +259,8 @@ function team_schedule_team_expiration_event_update( $post_id ) {
 //wow ismi yerine plugine uyan bir isim olmalı team-stnc gibi bla bla
 // verify if this is an auto save routine.
 // If it is our form has not been submitted, so we dont want to do anything
-add_action( 'pre_post_update', 'post_updating_callback' );
-function post_updating_callback( $post_id ) {
+add_action( 'pre_post_update', 'CHfw2_post_updating_callback' );
+function  CHfw2_post_updating_callback( $post_id ) {
     global $post;
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
         return;
@@ -268,19 +268,14 @@ function post_updating_callback( $post_id ) {
     if ( $post->post_status == "publish" && $post->post_type == "team" ) {
         //$postarr = get_post($post_id,'ARRAY_A');
         $display_before_title_read = get_the_title( $post_id );
-        
-        
+
+
         update_post_meta( $post_id, 'wow_BeforeTitle', $display_before_title_read );
-        
+
     }
 }
 
 
-
-
-
-
-require ("CHfw-team-metabox-options.php");
 
 
 
