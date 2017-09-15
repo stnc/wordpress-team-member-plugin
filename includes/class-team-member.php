@@ -1,25 +1,25 @@
 <?php
 
 
-$CHfw_meta_key_team = 'CHfwPostSetting';
-$CHfw_postID      = isset( $_GET['post'] ) ? $_GET['post'] : null;//post  id  for edit
-$CHfw_post_type   = ( get_post_type( $CHfw_postID ) );//get type
-$CHfw_post_type_post = isset( $_REQUEST['post_type'] ) ? $_REQUEST['post_type'] : 'post';//for new
+$Nuc_meta_key_team = 'CHfwPostSetting';
+$Nuc_postID      = isset( $_GET['post'] ) ? $_GET['post'] : null;//post  id  for edit
+$Nuc_post_type   = ( get_post_type( $Nuc_postID ) );//get type
+$Nuc_post_type_post = isset( $_REQUEST['post_type'] ) ? $_REQUEST['post_type'] : 'post';//for new
 
 
 /**
  * add_meta_boxes
  * @link https://developer.wordpress.org/reference/functions/add_meta_box/
  */
-class CHfw_metabox_engine_team_member {
+class Nuc_metabox_engine_team_member {
 	public $nonce = 'st_studio';
 	private $meta_key;
 	private $fields;
 	private $current_id;
 
 	public function __construct( $fields ) {
-		global $CHfw_meta_key_team ;
-		$this->meta_key = $CHfw_meta_key_team;
+		global $Nuc_meta_key_team ;
+		$this->meta_key = $Nuc_meta_key_team;
 
 		if ( is_admin() ) {
 			$this->fields = $fields;
@@ -43,44 +43,7 @@ class CHfw_metabox_engine_team_member {
 		) );
 	}
 
-	/**
-	 * Save the Meta box values
-	 */
-	public function meta_box_save_func( $post_id ) {
 
-		// Stop the script when doing autosave
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return $post_id;
-		}
-
-		// Verify the nonce. If insn't there, stop the script
-
-		if ( ! isset( $_POST[ $this->nonce ] ) && ! wp_verify_nonce( $_POST[ $this->nonce ], basename( __FILE__ ) ) ) {
-			return $post_id;
-		}
-
-		// check permissions
-		// Stop the script if the user does not have edit permissions
-		if ( 'page' == $_POST['post_type'] ) {
-			if ( ! current_user_can( 'edit_page', get_the_id() ) ) {
-				return $post_id;
-			}
-		} elseif ( ! current_user_can( 'edit_post', get_the_id() ) ) {
-			return $post_id;
-		}
-
-		// TODO: fete look
-		foreach ( $this->fields['fields'] as $field ) {
-			$old = get_post_meta( $post_id, $field['id'], true );
-			$new = $_POST[ $field['id'] ];
-
-			if ( $new && $new != $old ) {
-				update_post_meta( $post_id, $field['id'], $new );
-			} elseif ( '' == $new && $old ) {
-				delete_post_meta( $post_id, $field['id'], $old );
-			}
-		}
-	}
 
 	/**
 	 * Save the Meta box values
@@ -110,10 +73,7 @@ class CHfw_metabox_engine_team_member {
 
 		foreach ( $this->fields as $fields ) {
 			foreach ( $fields['fields'] as $key => $field ) {
-
 				$post_meta_[ $field['name'] ] = isset( $_POST[ $field['name'] ] ) ? $_POST[ $field['name'] ] : '';
-
-
 			}
 		}
 
@@ -126,7 +86,11 @@ class CHfw_metabox_engine_team_member {
 	 * Register the Meta box
 	 */
 	public function add_custom_meta_box() {
+	//	print_r ($this->fields);
+		
+		
 		foreach ( $this->fields as $key => $field ) {
+			//print_r ($field);
 			add_meta_box(
 				$field['name'],
 				__( $field['title'], 'st_studioEngine' ),
@@ -151,14 +115,14 @@ class CHfw_metabox_engine_team_member {
 		echo '<div class="wp-core-ui  st_studio-Engine-Form" style="' . $fields['style'] . '"  class="' . $fields['class'] . $fields['name'] . '"><ul>';
 
 		if ( $fields['title_h2'] ) {
-			echo '<li><h2  data-required="CHfw_pageSetting_background_repeat">' . $fields['title'] . '</h2> </li>';
+			echo '<li><h2  data-required="Nuc_pageSetting_background_repeat"><strong>' . $fields['title'] . '</strong></h2> </li>';
 		}
 
 		foreach ( $fields['fields'] as $key => $values ) {
 
 			switch ( $values['type'] ) {
 				case 'info':
-					echo '<li class="' . $values['class_li'] . '"  id="' . $values['name'] . '_li"> <h2>' . $values['title'] . '</h2>  <br>   <span style="padding-left: 15px;">' . $values['description'] . '</span>        </li>';
+					echo '<li class="' . $values['class_li'] . '"  id="' . $values['name'] . '_li"> <h2><strong>' . $values['title'] . '</strong></h2>  <br>   <span style="padding-left: 15px;">' . $values['description'] . '</span>     <hr>   </li>';
 					break;
 
 				case 'image_select':
@@ -207,6 +171,8 @@ class CHfw_metabox_engine_team_member {
               <input type="text" value="' . $this->get_meta( $values['name'] ) . '"  class="ch-color-picker ' . $values['class'] . '" style="' . $values['style'] . 'background-color:' . $this->get_meta( $values['name'] ) . '" name="' . $values['name'] . '" id="' . $values['name'] . '"/>
                ' . $this->post_options_description( $values['description'] ) . '</li>';
 					break;
+
+				/*UPLOAD */
 				case 'upload':
 					echo '<li class="' . $values['class_li'] . '" id="' . $values['name'] . '_li"><label for="' . $values['name'] . '">' . $values['title'] . '</label>
               <input type="text" value="' . $this->get_meta( $values['name'] ) . '"  class="' . $values['class'] . '" style="display:none;' . $values['style'] . '" name="' . $values['name'] . '" id="' . $values['name'] . '"/>
@@ -215,21 +181,52 @@ class CHfw_metabox_engine_team_member {
         <br>
         <div class="background_attachment_metabox_container">';
 					if ( ! empty( $this->get_meta( $values['name'] ) ) ) {
-						echo '<div class="images-containerBG"><div class="single-imageBG"><span class="delete">X</span>';
-						echo '  <img data-targetID="' . $values['name'] . '" class="attachment-100x100 wp-post-image" witdh="100" height="100" src="' . $this->get_meta( $values['name'] ) . '">';
-						echo '</div></div>';
+						$fileExtension = $this->fileExtension( $this->get_meta( $values['name'] ) );
+						if ( $fileExtension == "jpg" || $fileExtension == "jpeg" || $fileExtension == "png" || $fileExtension == "gif" ) {
+							echo '<div class="images-containerBG"><div class="single-imageBG"><span class="delete">X</span>';
+							echo '  <img  data-targetID="' . $values['name'] . '" alt="' . $values['name'] . '" class="attachment-100x100 wp-post-image" witdh="100" height="100" src="' . $this->get_meta( $values['name'] ) . '">';
+							echo '</div></div>';
+						} else {
+							?>
+							<div class="images-containerBG">
+								<div style="width: 53px; height: 53px;" class="single-imageBG">
+									<span data-targetID="<?php echo $values['name'] ?>" class="delete_media">X</span>
+									<span style="font-size: 46px" class="info dashicons dashicons-admin-media"></span>
+								</div>
+							</div>
+							<?php
+						}
 					}
 					echo '</div></li>';
 					break;
+
 				// Media Gallery Code
 				case 'media-gallery':
+					$imagewow2=array();
+					$imagesBUll_ = $this->get_meta( $values['name'] );
+					if ( ! empty( $imagesBUll_ ) ) {
+						$imagesBUlls = explode( ',', $imagesBUll_ );
+						$imagesBUlls = array_unique( $imagesBUlls );
+
+						foreach ( $imagesBUlls as $key => $val ) {
+							if ( $val == '' ) {
+								unset( $imagesBUlls[ $key ] );
+							}
+						}
+					}
+					if ( ! empty( $imagesBUlls ) ) :
+						foreach ( $imagesBUlls as $imagesBUll ) :
+							$imagewow   = wp_get_attachment_image_src( ( $imagesBUll ), 'wow-BlogList_MediumSmall_SidebarOpen' );
+							$imagewow2 []= $imagewow[0];
+						endforeach;
+					endif;
 					echo '<li class="' . $values['class_li'] . '" id="' . $values['name'] . '_li">
                                 <div class="drop_meta_item gallery">
 	                            <label for="' . $values['name'] . '">' . $values['title'] . '</label>
 	                            <div class="st_studio-metadata">
 	                            <div class="images-container"></div>
 	                            <div class="images-container2">
-                                <input id="' . $values['name'] . '"   class="meta_field media_field_content" value="' . $this->get_meta( $values['name'] ) . '"  name="' . $values['name'] . '" type="hidden"   style="' . $values['style'] . '"/>
+                                <input id="' . $values['name'] . '"   class="meta_field media_field_content"  value="' . implode(',',$imagewow2) .'"   name="' . $values['name'] . '" type="hidden"   style="' . $values['style'] . '"/>
 	                            <input type="button" name="uploader" class="STNCupload_button button button-primary" value="' . __( 'Add Images', 'CHfw' ) . '">
 	                            </div>
 	                            </div>
@@ -328,24 +325,44 @@ class CHfw_metabox_engine_team_member {
 
 
 
-function CHfw_team_options_() {
+function Nuc_team_options_() {
 	include( 'metabox_team_options.php' );
-	$ch_post_options_team['0'] = $CHfw_OptionsPageSettingTeam;
-	$engine_page_team          = new CHfw_metabox_engine_team_member( $ch_post_options_team );
+	$ch_post_options_team['0'] = $Nuc_OptionsPageSettingteam;
+	$engine_page_team          = new Nuc_metabox_engine_team_member( $ch_post_options_team );
 }
 
 
 
 
-if ( $CHfw_post_type == 'team' ) {
+if ( $Nuc_post_type == 'team' ) {
 //team
-	CHfw_team_options_();
+	Nuc_team_options_();
 }
 
 
-if ( $CHfw_post_type_post == 'team' ) {
+if ( $Nuc_post_type_post == 'team' ) {
 //team
-	CHfw_team_options_();
+	Nuc_team_options_();
+}
+
+
+function Nuc_team_options_locaiton() {
+	include( 'metabox_team_options.php' );
+	$ch_post_options_team['0'] = $Nuc_OptionsPageSettingteamLocaiton;
+	$engine_page_team          = new Nuc_metabox_engine_team_member( $ch_post_options_team );
+}
+
+
+
+if ( $Nuc_post_type == 'team_location' ) {
+//team
+	Nuc_team_options_locaiton();
+}
+
+
+if ( $Nuc_post_type_post == 'team_location' ) {
+//team
+	Nuc_team_options_locaiton();
 }
 
 
